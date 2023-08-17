@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "personal-dashboard"
+version = "0.1.0"
+description = ""
+authors = ["Nathan Perkins <nathan@v7labs.com>"]
+readme = "README.md"
+packages = [{include = "scripts"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+polars = "^0.18.15"
+numpy = "^1.25.2"
+seaborn = "^0.12.2"
+tqdm = "^4.66.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -8,7 +8,17 @@ struct FinancialInfo {
     returns: f32,
     fire_rate: f64,
     expenses: u64,
-    investments: u64
+    monthly_investment: u64
+}
+enum SimulationType {
+    MarkovChain,
+    LSTM
+}
+#[derive(Deserialize)]
+struct SimulationInfo {
+    financials: FinancialInfo,
+    simulations: u8
+    
 }
 #[post("/fire")]
 async fn fire_calculator(info: web::Json<FinancialInfo>) -> impl Responder {
@@ -21,7 +31,7 @@ async fn fire_calculator(info: web::Json<FinancialInfo>) -> impl Responder {
     let mut current_value = info.start as f64;
     let mut years = 0;
     while (current_value * info.fire_rate) < info.expenses as f64 {
-        current_value = current_value * (1.0 + info.returns as f64) + info.investments as f64;
+        current_value = current_value * (1.0 + info.returns as f64) + info.monthly_investment as f64;
         years += 1;
     }
     HttpResponse::Ok().body(format!("You can retire in {} years", years))
