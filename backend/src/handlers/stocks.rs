@@ -1,6 +1,6 @@
 use crate::{
-    models::StockModel,
-    schema::StockJson,
+    models::{StockModel, is_valid_ticker},
+    schema::{StockJson, ErrorJson, ErrorType},
     AppState,
 };
 use actix_web::{delete, get, patch, post, web, HttpResponse, Responder};
@@ -9,12 +9,15 @@ use actix_web::{delete, get, patch, post, web, HttpResponse, Responder};
 
 #[post("/stocks")]
 pub async fn add_stock(stock: web::Json<StockJson>, state: web::Data<AppState>) -> impl Responder {
+    if !is_valid_ticker(&stock.ticker).await {
+        return HttpResponse::BadRequest().json(ErrorJson::with_message(ErrorType::InvalidTicker, "Ticker could not be found on yahoo finance".to_string()));
+    }
     let stock = StockModel::new(stock.ticker.clone(), stock.amount_held);
     let result = stock.update_if_exists_or_create(&state.db_pool).await;
 
     match result {
         Ok(_) => HttpResponse::Ok().json(result.unwrap()),
-        Err(_) => HttpResponse::InternalServerError().body("Failed to add stock")
+        Err(message) => HttpResponse::InternalServerError().json(ErrorJson::with_message(ErrorType::DatabaseError, message.to_string()))
     }
 }
 
@@ -23,7 +26,7 @@ pub async fn update_stocks(id: web::Path<i32>, stock: web::Json<StockJson>, stat
     let result = StockModel::udpate_by_id(id.into_inner(), stock.into_inner(), &state.db_pool).await;
     match result {
         Ok(_) => HttpResponse::Ok().json(result.unwrap()),
-        Err(_) => HttpResponse::InternalServerError().body("Failed to update stock")
+        Err(message) => HttpResponse::InternalServerError().json(ErrorJson::with_message(ErrorType::DatabaseError, message.to_string()))
     }
 }
 
@@ -32,7 +35,7 @@ pub async fn get_stocks(state: web::Data<AppState>) -> impl Responder {
     let result = StockModel::get_all(&state.db_pool).await;
     match result {
         Ok(stocks) => HttpResponse::Ok().json(stocks),
-        Err(_) => HttpResponse::InternalServerError().body("Failed to get stocks")
+        Err(message) => HttpResponse::InternalServerError().json(ErrorJson::with_message(ErrorType::DatabaseError, message.to_string()))
     }
 }
 
@@ -41,7 +44,7 @@ pub async fn delete_stocks(id: web::Path<i32>, state: web::Data<AppState>) -> im
     let result = StockModel::delete_by_id(id.into_inner(), &state.db_pool).await;
     match result {
         Ok(stock) => HttpResponse::Ok().json(stock),
-        Err(_) => HttpResponse::InternalServerError().body("Failed to delete stock")
+        Err(message) => HttpResponse::InternalServerError().json(ErrorJson::with_message(ErrorType::DatabaseError, message.to_string()))
     }
 }
 
@@ -50,7 +53,7 @@ pub async fn get_stock_by_id(id: web::Path<i32>, state: web::Data<AppState>) -> 
     let result = StockModel::get_by_id(id.into_inner(), &state.db_pool).await;
     match result {
         Ok(stock) => HttpResponse::Ok().json(stock),
-        Err(_) => HttpResponse::InternalServerError().body("Failed to get stock")
+        Err(message) => HttpResponse::InternalServerError().json(ErrorJson::with_message(ErrorType::DatabaseError, message.to_string()))
     }
 }
 
@@ -59,7 +62,7 @@ pub async fn get_stock_by_ticker(ticker: web::Path<String>, state: web::Data<App
     let result = StockModel::get_by_ticker(ticker.into_inner(), &state.db_pool).await;
     match result {
         Ok(stock) => HttpResponse::Ok().json(stock),
-        Err(_) => HttpResponse::InternalServerError().body("Failed to get stock")
+        Err(message) => HttpResponse::InternalServerError().json(ErrorJson::with_message(ErrorType::DatabaseError, message.to_string()))
     }
 }
 

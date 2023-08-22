@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 use crate::models::StockModel;
 use yahoo_finance_api as yahoo;
+use strum_macros::{EnumString, Display};
 
 #[derive(Deserialize, Serialize)]
 pub struct StockJson {
@@ -38,4 +39,34 @@ impl StockJson {
 pub struct PortfolioJson {
     pub stocks: Vec<StockJson>,
     pub total: f64,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct ErrorJson {
+    pub error: ErrorType,
+    pub message: Option<String> 
+}
+#[derive(Deserialize, Serialize, EnumString, Display, Clone, Copy)]
+pub enum ErrorType {
+    InvalidTicker,
+    InvalidFireRate,
+    InvalidReturns,
+    InvalidExpenses,
+    InvalidMonthlyInvestment,
+    DatabaseError,
+}
+
+impl ErrorJson {
+    pub fn default(error: ErrorType) -> Self {
+        Self {
+            error: error,
+            message: None
+        }
+    }
+    pub fn with_message(error: ErrorType, message: String) -> Self {
+        Self {
+            error: error,
+            message: Some(message)
+        }
+    }
 }

@@ -15,14 +15,13 @@ pub async fn calculate_porfolio(state: web::Data<AppState>) -> impl Responder {
     }
     let mut stocks = result.unwrap();
     let mut stocks_json: Vec<StockJson> = Vec::new();
+    let mut total = 0.0;
     for stock in stocks.iter_mut() {
         let mut stock_json = StockJson::from_model(stock.clone());
         stock_json.calculate_value().await;
+        total += stock_json.value.unwrap_or_default() * stock_json.amount_held as f64;
         stocks_json.push(stock_json);
     }
-    let total = stocks_json.iter().fold(0.0, |acc, stock| {
-        acc + stock.value.unwrap_or_default() * stock.amount_held as f64
-    });
     let portfolio = PortfolioJson {
         stocks: stocks_json,
         total: total

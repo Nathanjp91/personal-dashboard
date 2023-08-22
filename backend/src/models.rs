@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use chrono::NaiveDateTime;
 use sqlx;
 use crate::schema::StockJson;
+use yahoo_finance_api as yahoo;
 #[derive(Debug, Deserialize, Serialize, sqlx::FromRow, Clone)]
 pub struct StockModel {
     pub id: i32,
@@ -92,5 +93,15 @@ impl StockModel {
             },
             Err(_) => self.insert(db_pool).await
         }
+    }
+}
+
+pub async fn is_valid_ticker(ticker: &str) -> bool {
+    if ticker.len() <= 5 { return false; }
+    let provider = yahoo::YahooConnector::new();
+    let resp = provider.get_quote_range(ticker, "1m", "max").await;
+    match resp {
+        Ok(resp) => resp.quotes().unwrap_or_default().len() > 0,
+        Err(_) => false
     }
 }
