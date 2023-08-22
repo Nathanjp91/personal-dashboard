@@ -1,8 +1,9 @@
 mod handlers;
 mod models;
-
+mod schema;
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder, Result};
 use actix_web::middleware::Logger;
+use actix_cors::Cors;
 use serde::Deserialize;
 use serde::Serialize;
 use yahoo_finance_api as yahoo;
@@ -10,7 +11,6 @@ use chrono::{NaiveDate, Utc, TimeZone};
 use strum_macros::{EnumString, Display};
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use dotenv::dotenv;
-use handlers::configure_stocks;
 pub struct AppState {
     pub db_pool: PgPool
 }
@@ -173,11 +173,13 @@ async fn main() -> std::io::Result<()> {
         }
     };
 
+
     println!("🚀 Started server on {}:{}", ip_address, port);
     HttpServer::new(move || {
         App::new()
+        .wrap(Cors::permissive())
         .app_data(web::Data::new(AppState { db_pool: pool.clone() }))
-        .configure(configure_stocks)
+        .configure(handlers::configure)
         .service(fire_calculator)
         .service(ticker)
         .wrap(Logger::default())
