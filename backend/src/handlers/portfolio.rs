@@ -2,8 +2,8 @@
 use actix_web::{get, web, HttpResponse, Responder};
 use crate::{
     AppState,
-    models::StockModel,
-    schema::{StockJson, PortfolioJson}
+    models::stocks::StockModel,
+    schema::stocks::{StockJson, PortfolioJson}
 };
 
 #[get("/portfolio")]

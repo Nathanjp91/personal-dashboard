@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS trades_history (
     id SERIAL PRIMARY KEY,
     ticker VARCHAR(8) NOT NULL,
     amount INT NOT NULL,
-    type VARCHAR(4) NOT NULL,
+    trade_type VARCHAR(4) NOT NULL,
     date DATE NOT NULL,
     country VARCHAR(2) NOT NULL,
     price NUMERIC(10,2) NOT NULL

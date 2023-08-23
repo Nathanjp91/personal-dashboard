@@ -1,6 +1,6 @@
 use crate::{
-    models::{StockModel, is_valid_ticker},
-    schema::{StockJson, ErrorJson, ErrorType},
+    models::stocks::{StockModel, is_valid_ticker},
+    schema::stocks::{StockJson, ErrorJson, ErrorType},
     AppState,
 };
 use actix_web::{delete, get, patch, post, web, HttpResponse, Responder};
