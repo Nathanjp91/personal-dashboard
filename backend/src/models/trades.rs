@@ -1,8 +1,11 @@
 use chrono::NaiveDate;
 use sqlx;
+use sqlx::postgres::PgQueryResult;
 use sqlx::types::BigDecimal;
 use strum_macros::{EnumString, Display};
 use serde::{Deserialize, Serialize};
+use crate::models::quotes::QuoteModel;
+use crate::models::stocks::{StockModel, is_valid_ticker};
 #[derive(Debug, sqlx::FromRow, Clone)]
 pub struct TradeModel {
     pub id: i32,
@@ -49,7 +52,7 @@ impl std::convert::From<std::string::String> for TradeType {
 
 impl TradeModel {
     pub async fn insert(&self, db_pool: &sqlx::PgPool) -> Result<TradeModel, sqlx::Error> {
-        sqlx::query_as!(
+        let result = sqlx::query_as!(
             TradeModel,
             r#"INSERT INTO trades_history (ticker, amount, date, country, price, trade_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *"#,
             self.ticker,
@@ -58,7 +61,25 @@ impl TradeModel {
             self.country.to_string(),
             self.price,
             self.trade_type.to_string()
-        ).fetch_one(db_pool).await
+        ).fetch_one(db_pool).await;
+        match result {
+            Ok(result) => {
+                let mut stock = StockModel::new(self.ticker.clone(), self.amount);
+                match self.trade_type {
+                    TradeType::Buy => {
+                        stock.amount_held = self.amount;
+                    },
+                    TradeType::Sell => {
+                        stock.amount_held = -self.amount;
+                    }
+                }
+                let _ = stock.update_if_exists_or_create(db_pool).await;
+                return Ok(result);
+            },
+            Err(_) => {
+                return Err(sqlx::Error::RowNotFound);
+            }
+        }
     }
     pub async fn update(&self, db_pool: &sqlx::PgPool) -> Result<TradeModel, sqlx::Error> {
         sqlx::query_as!(
@@ -93,5 +114,10 @@ impl TradeModel {
             start,
             end
         ).fetch_all(db_pool).await
+    }
+    pub async fn delete_all(db_pool: &sqlx::PgPool) -> Result<PgQueryResult, sqlx::Error> {
+        sqlx::query!(
+            r#"DELETE FROM trades_history"#,
+        ).execute(db_pool).await
     }
 }

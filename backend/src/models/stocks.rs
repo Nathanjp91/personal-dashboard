@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use chrono::NaiveDate;
 use sqlx;
+use sqlx::postgres::PgQueryResult;
 use crate::schema::stocks::StockJson;
 use yahoo_finance_api as yahoo;
 #[derive(Debug, Deserialize, Serialize, sqlx::FromRow, Clone)]
@@ -69,6 +70,14 @@ impl StockModel {
             r#"SELECT * FROM stocks"#
         ).fetch_all(db_pool).await
     }
+    pub async fn get_all_tickers(db_pool: &sqlx::PgPool) -> Result<Vec<String>, sqlx::Error> {
+        let stocks = Self::get_all(db_pool).await?;
+        let mut tickers = Vec::new();
+        for stock in stocks {
+            tickers.push(stock.ticker);
+        }
+        Ok(tickers)
+    }
     pub async fn get_by_id(id: i32, db_pool: &sqlx::PgPool) -> Result<StockModel, sqlx::Error> {
         sqlx::query_as!(
             StockModel,
@@ -88,11 +97,19 @@ impl StockModel {
         match result {
             Ok(stock) => {
                 let mut new_stock = stock;
-                new_stock.amount_held = self.amount_held;
-                new_stock.update(db_pool).await
+                new_stock.amount_held += self.amount_held;
+                match new_stock.amount_held {
+                    x if x <= 0 => new_stock.delete(db_pool).await,
+                    _ => new_stock.update(db_pool).await
+                }
             },
             Err(_) => self.insert(db_pool).await
         }
+    }
+    pub async fn delete_all(db_pool: &sqlx::PgPool) -> Result<PgQueryResult, sqlx::Error> {
+        sqlx::query!(
+            r#"DELETE FROM stocks"#,
+        ).execute(db_pool).await
     }
 }
 
