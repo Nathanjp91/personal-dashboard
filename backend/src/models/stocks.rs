@@ -97,9 +97,8 @@ impl StockModel {
 }
 
 pub async fn is_valid_ticker(ticker: &str) -> bool {
-    if ticker.len() <= 5 { return false; }
     let provider = yahoo::YahooConnector::new();
-    let resp = provider.get_quote_range(ticker, "1m", "max").await;
+    let resp = provider.get_latest_quotes(ticker, "1d").await;
     match resp {
         Ok(resp) => resp.quotes().unwrap_or_default().len() > 0,
         Err(_) => false
