@@ -4,6 +4,7 @@ use sqlx::postgres::PgQueryResult;
 use sqlx::types::BigDecimal;
 use strum_macros::{EnumString, Display};
 use serde::{Deserialize, Serialize};
+use yahoo_finance_api::Quote;
 use crate::models::quotes::QuoteModel;
 use crate::models::stocks::{StockModel, is_valid_ticker};
 #[derive(Debug, sqlx::FromRow, Clone)]
@@ -73,7 +74,9 @@ impl TradeModel {
                         stock.amount_held = -self.amount;
                     }
                 }
+                println!("{:?}", stock);
                 let _ = stock.update_if_exists_or_create(db_pool).await;
+                let _ = QuoteModel::populate_ticker(self.ticker.clone(), db_pool).await;
                 return Ok(result);
             },
             Err(_) => {
