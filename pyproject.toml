@@ -12,6 +12,8 @@ polars = "^0.18.15"
 numpy = "^1.25.2"
 seaborn = "^0.12.2"
 tqdm = "^4.66.1"
+jupyterlab = "^4.0.5"
+notebook = "^7.0.2"
 
 
 [build-system]
