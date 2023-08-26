@@ -1,11 +1,11 @@
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{NaiveDate, NaiveDateTime, Utc};
 use sqlx;
 use sqlx::postgres::PgQueryResult;
-use time;
 use sqlx::types::BigDecimal;
 use yahoo_finance_api::time::OffsetDateTime;
 use yahoo_finance_api::time::macros::datetime;
 use bigdecimal::FromPrimitive;
+use crate::schema::Pagination;
 #[derive(Debug, sqlx::FromRow, Clone)]
 pub struct QuoteModel {
     pub ticker: String,
@@ -47,14 +47,26 @@ impl QuoteModel {
         ).fetch_one(db_pool).await
     }
     pub async fn populate_ticker(ticker: String, db_pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
-        
         let end = OffsetDateTime::now_utc();
-        let start = datetime!(1970-01-01 0:00 UTC);
+        let mut start = datetime!(1970-01-01 0:00 UTC);
+        let latest = QuoteModel::get_closest_date(ticker.clone(), Utc::now().date_naive(), db_pool).await;
+        match latest {
+            Ok(latest) => {
+                let new_start = latest.date + chrono::Duration::days(1);
+                start = OffsetDateTime::from_unix_timestamp(new_start.and_hms_opt(0, 0, 0).expect("Failed to convert datetime").timestamp() as i64).unwrap_or(start);
+            },
+            Err(_) => {}
+        }
+        if start.date() == end.date() {
+            println!("Ticker: {} is up to date", ticker);
+            return Ok(());
+        }
         let result = yahoo_finance_api::YahooConnector::new().get_quote_history(&ticker, start, end).await;
         match result {
             Ok(result) => {
                 let quotes = result.quotes();
-                println!("Quotes: {:?}", quotes);
+                let mut added = 0;
+                let mut errors = 0;
                 for quote in quotes.unwrap_or_default() {
                     let date = NaiveDateTime::from_timestamp_opt(quote.timestamp as i64, 0);
                     if date.is_none() {
@@ -71,10 +83,15 @@ impl QuoteModel {
                     };
                     let result = quote.insert(db_pool).await;
                     match result {
-                        Ok(_) => {println!("Inserted quote: {}", quote.date);},
-                        Err(_) => {println!("Failed to insert quote: {}", quote.date);}
+                        Ok(_) => {
+                            added += 1;
+                        },
+                        Err(_) => {
+                            errors += 1;
+                        }
                     }
                 }
+                println!("Quotes Added: {}, Errors: {}", added, errors);
                 return Ok(());
             },
             Err(err) => {
@@ -96,10 +113,13 @@ impl QuoteModel {
             self.volume,
         ).fetch_one(db_pool).await
     }
-    pub async fn get_all(db_pool: &sqlx::PgPool) -> Result<Vec<QuoteModel>, sqlx::Error> {
+    pub async fn get_all_paginated(page: Pagination, db_pool: &sqlx::PgPool) -> Result<Vec<QuoteModel>, sqlx::Error> {
+        println!("Page: {:?}", page);
         sqlx::query_as!(
             QuoteModel,
-            r#"SELECT * FROM quotes"#
+            r#"SELECT * FROM quotes ORDER BY date DESC LIMIT $1 OFFSET $2"#,
+            page.page_size,
+            page.page_size * page.page
         ).fetch_all(db_pool).await
     }
     pub async fn get_by_ticker_date(ticker: String, date: NaiveDate, db_pool: &sqlx::PgPool) -> Result<QuoteModel, sqlx::Error> {
