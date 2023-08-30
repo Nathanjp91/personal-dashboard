@@ -28,6 +28,8 @@ pub async fn get_trades(state: web::Data<AppState>) -> impl Responder {
         Err(_) => HttpResponse::InternalServerError().body("Failed to get trades")
     }
 }
+
+
 pub fn configure_trades(config: &mut web::ServiceConfig) {
     config.service(add_trade);
     config.service(get_trades);

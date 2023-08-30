@@ -110,7 +110,7 @@ impl TradeModel {
     pub async fn get_all(db_pool: &sqlx::PgPool) -> Result<Vec<TradeModel>, sqlx::Error> {
         sqlx::query_as!(
             TradeModel,
-            r#"SELECT * FROM trades_history"#
+            r#"SELECT * FROM trades_history ORDER BY date DESC"#
         ).fetch_all(db_pool).await
     }
     pub async fn get_all_date_range(start: NaiveDate, end: NaiveDate, db_pool: &sqlx::PgPool) -> Result<Vec<TradeModel>, sqlx::Error> {

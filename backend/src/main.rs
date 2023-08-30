@@ -8,9 +8,11 @@ use serde::Deserialize;
 use serde::Serialize;
 use yahoo_finance_api as yahoo;
 use chrono::{NaiveDate, Utc, TimeZone};
+use std::time::Duration;
 use strum_macros::{EnumString, Display};
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use dotenv::dotenv;
+use actix_rt::{spawn, time::interval};
 pub struct AppState {
     pub db_pool: PgPool
 }
@@ -156,7 +158,13 @@ async fn main() -> std::io::Result<()> {
 
     dotenv().ok();
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-
+    spawn(async move {
+        let mut interval = interval(Duration::from_secs(5));
+        loop {
+            interval.tick().await;
+            println!("🔥🔥🔥");
+        }
+    });
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let pool = match PgPoolOptions::new()
         .max_connections(10)
