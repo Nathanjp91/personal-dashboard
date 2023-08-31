@@ -57,7 +57,7 @@ impl QuoteModel {
             },
             Err(_) => {}
         }
-        if start.date() == end.date() {
+        if start.date() >= end.date() {
             println!("Ticker: {} is up to date", ticker);
             return Ok(());
         }
@@ -95,7 +95,7 @@ impl QuoteModel {
                 return Ok(());
             },
             Err(err) => {
-                println!("Error: {:?}", err);
+                println!("Error with Yahoo: {:?}", err);
                 return Err(sqlx::Error::RowNotFound);
             }
         }
@@ -112,6 +112,16 @@ impl QuoteModel {
             self.close,
             self.volume,
         ).fetch_one(db_pool).await
+    }
+    pub async fn get_tickers(db_pool: &sqlx::PgPool) -> Result<Vec<String>, sqlx::Error> {
+        sqlx::query!(
+            r#"SELECT DISTINCT ticker FROM quotes"#,
+        ).fetch_all(db_pool).await.map(|result| result.iter().map(|row| row.ticker.clone()).collect())
+    }
+    pub async fn get_active_tickers(db_pool: &sqlx::PgPool) -> Result<Vec<String>, sqlx::Error> {
+        sqlx::query!(
+            r#"SELECT DISTINCT quotes.ticker FROM quotes INNER JOIN stocks on quotes.ticker = stocks.ticker"#,
+        ).fetch_all(db_pool).await.map(|result| result.iter().map(|row| row.ticker.clone()).collect())
     }
     pub async fn get_all_paginated(page: Pagination, db_pool: &sqlx::PgPool) -> Result<Vec<QuoteModel>, sqlx::Error> {
         println!("Page: {:?}", page);
@@ -159,5 +169,25 @@ impl QuoteModel {
         sqlx::query!(
             r#"DELETE FROM quotes"#,
         ).execute(db_pool).await
+    }
+    pub async fn update_quotes(db_pool: &sqlx::PgPool) -> Result<(), sqlx::Error> {
+        let tickers = QuoteModel::get_tickers(db_pool).await;
+        match tickers {
+            Ok(tickers) => {
+                for ticker in tickers {
+                    let result = QuoteModel::populate_ticker(ticker.clone(), db_pool).await;
+                    match result {
+                        Ok(_) => {},
+                        Err(err) => {
+                            println!("Error populating {}: {:?}", ticker.clone(), err);
+                        }
+                    }
+                }
+                return Ok(());
+            },
+            Err(_) => {
+                return Err(sqlx::Error::RowNotFound);
+            }
+        }
     }
 }

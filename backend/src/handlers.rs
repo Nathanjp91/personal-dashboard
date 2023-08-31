@@ -3,6 +3,7 @@ pub mod portfolio;
 pub mod trades;
 pub mod admin;
 pub mod quotes;
+pub mod modelling;
 
 use actix_web::web;
 

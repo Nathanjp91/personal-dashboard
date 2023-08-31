@@ -1,7 +1,7 @@
 import polars as pl
 import requests
 import re
-
+from datetime import datetime
 df = pl.read_csv("./data/cmc_trading_account.csv")
 server = "http://localhost:8080/trades"
 
@@ -11,7 +11,7 @@ for row in df.iter_rows():
     if raw_type != "CB" and raw_type != "CS":
         continue
     trade_type = "Buy" if raw_type == "CB" else "Sell"
-    date = str(row[0])
+    date = datetime.strptime(row[0], "%d/%m/%Y").strftime("%Y-%m-%d")
     results = re.match(r"(Sold|Bght) (\d+) ([\w:]*) @ ([\d\.]*)", row[3])
     ticker = results.group(3).strip() + ".AX" if not results.group(3).endswith(":US") else results.group(3)[:-3]
     amount = int(results.group(2))
@@ -33,9 +33,9 @@ for row in df.iter_rows():
     else:
         raise ValueError("Trade type doesn't exist")
     
-    # response = requests.post(server, json=body)
-    # if response.status_code != 200:
-    #     print(response.text + "\n" + str(body))
+    response = requests.post(server, json=body)
+    if response.status_code != 200:
+        print(response.text + "\n" + str(body))
 
 print(totals)
         
