@@ -1,0 +1,30 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    ports:
+      - '6500:5432'
+    volumes:
+      - postgresDB:/data/postgres
+    env_file:
+      - ./.env
+  pgAdmin:
+    image: dpage/pgadmin4
+    container_name: pgAdmin
+    env_file:
+      - ./.env
+    ports:
+      - "5050:80"
+  frontend:
+    container_name: frontend
+    build:
+      context: .
+      dockerfile: ./frontend/dev.Dockerfile
+    volumes:
+      - ./frontend:/app/frontend
+      - ./common:/app/common
+    ports:
+      - "80:8080"
+volumes:
+  postgresDB:

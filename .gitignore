@@ -9,3 +9,6 @@ data
 
 # data related
 *.csv
+
+/frontend/dist
+/frontend/target
