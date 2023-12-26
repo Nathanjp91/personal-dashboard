@@ -16,7 +16,7 @@ PGADMIN_DEFAULT_EMAIL=example@email.com
 PGADMIN_DEFAULT_PASSWORD=mysecretpassword
 ```
 ## sqlx migrate
-Install the sqlx-cli (here)[https://crates.io/crates/sqlx-cli]
+Install the sqlx-cli [here](https://crates.io/crates/sqlx-cli)
 start the server and database server with `docker compose up -d`
 
 create the database
