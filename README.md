@@ -15,8 +15,9 @@ DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:$
 PGADMIN_DEFAULT_EMAIL=example@email.com
 PGADMIN_DEFAULT_PASSWORD=mysecretpassword
 ```
-## sqlx migrate
+## sqlx database setup
 Install the sqlx-cli [here](https://crates.io/crates/sqlx-cli)
+
 start the server and database server with `docker compose up -d`
 
 create the database
