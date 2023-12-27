@@ -1,4 +1,4 @@
-/target
+*/target
 
 .env
 
@@ -12,3 +12,4 @@ data
 
 /frontend/dist
 /frontend/target
+

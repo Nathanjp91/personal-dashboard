@@ -4,7 +4,7 @@ services:
     image: postgres:latest
     container_name: postgres
     ports:
-      - '6500:5432'
+      - '5432:5432'
     volumes:
       - postgresDB:/data/postgres
     env_file:
@@ -26,5 +26,29 @@ services:
       - ./common:/app/common
     ports:
       - "80:8080"
+  backend:
+    container_name: backend
+    build:
+      context: .
+      dockerfile: ./backend/dev.Dockerfile
+    volumes:
+      - ./backend:/app/backend
+      - ./common:/app/common
+    env_file:
+      - ./.env
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    command: >
+      bash -c "
+        until echo > /dev/tcp/postgres/5432; do sleep 1; done
+        echo 'attempting database creation'
+        sqlx database create
+        echo 'attempting migrations'
+        sqlx migrate run
+        cargo build --release
+        cargo watch -- cargo run
+      "
 volumes:
   postgresDB:

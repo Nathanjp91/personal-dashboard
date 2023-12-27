@@ -14,7 +14,7 @@ pub struct AppState {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let ip_address = "127.0.0.1";
+    let ip_address = "0.0.0.0";
     let port = 8080;
 
     dotenv().ok();

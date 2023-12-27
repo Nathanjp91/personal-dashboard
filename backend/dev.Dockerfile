@@ -12,10 +12,7 @@ WORKDIR /app/backend
 
 
 RUN rustup target add wasm32-unknown-unknown
-RUN cargo install --locked trunk
+RUN cargo install cargo-watch
 
-# Install dependencies
-RUN cargo build --release
-
-# Run the directory with the trunk tool
-CMD ["trunk", "serve", "--release", "--address", "0.0.0.0"]
+# install sqlx manager
+RUN cargo install sqlx-cli --no-default-features --features postgres
