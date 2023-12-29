@@ -25,3 +25,6 @@ create the database
 
 run migrations
 `sqlx migrate run`
+
+
+# Running
