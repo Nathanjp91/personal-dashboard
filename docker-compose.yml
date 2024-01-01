@@ -34,21 +34,13 @@ services:
     volumes:
       - ./backend:/app/backend
       - ./common:/app/common
+      - ./scripts:/app/scripts
     env_file:
       - ./.env
     ports:
       - "8080:8080"
     depends_on:
       - postgres
-    command: >
-      bash -c "
-        until echo > /dev/tcp/postgres/5432; do sleep 1; done
-        echo 'attempting database creation'
-        sqlx database create
-        echo 'attempting migrations'
-        sqlx migrate run
-        cargo build --release
-        cargo watch -- cargo run
-      "
+    command: bash -c "source /app/scripts/set_docker_database_url.sh && /app/scripts/start_backend.sh && sh"
 volumes:
   postgresDB:

@@ -4,6 +4,8 @@
         "./backend/Cargo.toml",
         "./backend/Cargo.toml",
         "./backend/Cargo.toml",
+        "./backend/Cargo.toml",
+        "./backend/Cargo.toml",
         "./backend/Cargo.toml"
     ]
 }
