@@ -4,13 +4,12 @@ pub mod trades;
 pub mod admin;
 pub mod quotes;
 pub mod modelling;
+use std::sync::Arc;
+use axum::Router;
 
-use actix_web::web;
+use crate::AppState;
 
-pub fn configure(config: &mut web::ServiceConfig) {
-    quotes::configure_quotes(config);
-    stocks::configure_stocks(config);
-    portfolio::configure_portfolio(config);
-    trades::configure_trades(config);
-    admin::configure_admin(config);
+pub fn build_router() -> Router<Arc<AppState>> {
+    let stocks = stocks::build_router();
+    Router::new().merge(stocks)
 }

@@ -35,6 +35,19 @@ impl StockJson {
         }
     }
 }
+
+impl From<StockModel> for StockJson {
+    fn from(model: StockModel) -> Self {
+        Self {
+            id: Some(model.id),
+            ticker: model.ticker,
+            amount_held: model.amount_held,
+            last_updated: Some(model.last_updated),
+            value: None
+        }
+    }
+}
+
 #[derive(Deserialize, Serialize)]
 pub struct PortfolioJson {
     pub stocks: Vec<StockJson>,

@@ -1,5 +1,12 @@
 version: '3'
 services:
+  dozzle:
+    container_name: dozzle
+    image: amir20/dozzle:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - 9999:8080
   postgres:
     image: postgres:latest
     container_name: postgres
@@ -41,6 +48,6 @@ services:
       - "8080:8080"
     depends_on:
       - postgres
-    command: bash -c "source /app/scripts/set_docker_database_url.sh && /app/scripts/start_backend.sh && sh"
+    command: bash -c "source /app/scripts/set_docker_database_url.sh && /app/scripts/start_backend.sh"
 volumes:
   postgresDB:

@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use chrono::NaiveDate;
 use sqlx;
 use sqlx::postgres::PgQueryResult;
+use yahoo::YahooError;
 use crate::schema::stocks::StockJson;
 use yahoo_finance_api as yahoo;
 #[derive(Debug, Deserialize, Serialize, sqlx::FromRow, Clone)]
@@ -119,5 +120,17 @@ pub async fn is_valid_ticker(ticker: &str) -> bool {
     match resp {
         Ok(resp) => resp.quotes().unwrap_or_default().len() > 0,
         Err(_) => false
+    }
+}
+
+pub async fn valid_ticker(ticker: &str) -> Result<(), YahooError> {
+    let provider = yahoo::YahooConnector::new();
+    let resp = provider.get_latest_quotes(ticker, "1d")
+        .await
+        .map_err(|_| YahooError::FetchFailed("Ticker could not be found on yahoo finance".to_string()))?;
+    if resp.quotes().unwrap_or_default().len() > 0 {
+        Ok(())
+    } else {
+        Err(YahooError::FetchFailed("Ticker could not be found on yahoo finance".to_string()))
     }
 }
